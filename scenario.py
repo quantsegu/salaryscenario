@@ -57,6 +57,17 @@ st.subheader("Income Parameters")
 income_cols = st.columns(len(base_scenarios))
 scenarios = []
 
+# Initialize session state for storing values if not already initialized
+if 'scenario_values' not in st.session_state:
+    st.session_state.scenario_values = {
+        idx: {
+            'hourly_rate': 100,
+            'hours_per_week': 36,
+            'gross_income': 150000,
+            'company_expenses': 0
+        } for idx in range(len(base_scenarios))
+    }
+
 for idx, (col, base_scenario) in enumerate(zip(income_cols, base_scenarios)):
     with col:
         st.markdown(f"**{base_scenario['scenario']}**")
@@ -66,7 +77,7 @@ for idx, (col, base_scenario) in enumerate(zip(income_cols, base_scenarios)):
                 "Hourly Rate (€)",
                 min_value=20,
                 max_value=500,
-                value=100,
+                value=st.session_state.scenario_values[idx]['hourly_rate'],
                 step=5,
                 key=f"rate_{idx}"
             )
@@ -74,22 +85,29 @@ for idx, (col, base_scenario) in enumerate(zip(income_cols, base_scenarios)):
                 "Hours per Week",
                 min_value=1,
                 max_value=60,
-                value=36,
+                value=st.session_state.scenario_values[idx]['hours_per_week'],
                 step=1,
                 key=f"hours_{idx}"
             )
             # Calculate annual gross income (48 weeks per year)
             gross_income = hourly_rate * hours_per_week * 48
             st.write(f"Annual: €{gross_income:,.2f}")
+            
+            # Update session state
+            st.session_state.scenario_values[idx]['hourly_rate'] = hourly_rate
+            st.session_state.scenario_values[idx]['hours_per_week'] = hours_per_week
+            st.session_state.scenario_values[idx]['gross_income'] = gross_income
         else:
             gross_income = st.number_input(
                 "Annual Gross Income (€)",
                 min_value=50000,
                 max_value=500000,
-                value=150000,
+                value=st.session_state.scenario_values[idx]['gross_income'],
                 step=5000,
                 key=f"income_{idx}"
             )
+            # Update session state
+            st.session_state.scenario_values[idx]['gross_income'] = gross_income
 
 st.subheader("Company Expenses")
 expense_cols = st.columns(len(base_scenarios))
@@ -99,14 +117,16 @@ for idx, (col, base_scenario) in enumerate(zip(expense_cols, base_scenarios)):
             "Additional Expenses (€)",
             min_value=0,
             max_value=100000,
-            value=0,
+            value=st.session_state.scenario_values[idx]['company_expenses'],
             step=1000,
             key=f"expense_{idx}"
         )
+        # Update session state
+        st.session_state.scenario_values[idx]['company_expenses'] = company_expenses
         
         # Create complete scenario with all parameters
         scenario = base_scenario.copy()
-        scenario["gross_income"] = gross_income
+        scenario["gross_income"] = st.session_state.scenario_values[idx]['gross_income']
         scenario["company_expenses"] = company_expenses
         scenarios.append(scenario)
 
